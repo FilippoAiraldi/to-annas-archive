@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<style>
+	  /* General box-sizing setup, similar to browser_style */
+	  *, *::before, *::after {
+		box-sizing: border-box;
+	  }
+
+	  /* Table Styling */
+	  table, th, td {
+		border: 1px solid black;
+		border-collapse: collapse;
+	  }
+	  td, th {
+		padding: 0.5em 10px; /* Added some padding to look closer to browser defaults */
+	  }
+
+	  /* Option Block Styling */
+	  .option {
+		display: flex;
+		flex-direction: row;
+		justify-content: left;
+		align-items: center;
+		margin: 0.75em 0; /* Adjusted margin for consistent spacing */
+		padding: 0.5em; /* Added some padding to create spacing between elements */
+		border: 1px solid #ccc; /* Soft border for visual separation */
+		background-color: #f9f9f9; /* Light background color */
+		border-radius: 4px; /* Slight rounding of corners to match default browser style */
+	  }
+
+	  /* Separator Styling */
+	  .separator {
+		display: flex;
+		align-items: center;
+		text-align: center;
+		margin: 1.5em 0; /* Adjusted margin for better spacing */
+	  }
+	  .separator::before,
+	  .separator::after {
+		content: '';
+		flex: 1;
+		border-bottom: 1px solid #aaa; /* Lightened border to match default Firefox style */
+	  }
+	  .separator:not(:empty)::before {
+		margin-right: 0.5em; /* Adjusted margin for balanced spacing */
+	  }
+	  .separator:not(:empty)::after {
+		margin-left: 0.5em;
+	  }
+
+	  /* Optional: Global reset for padding/margins to avoid any browser inconsistencies */
+	  body {
+		font-family: sans-serif; /* Using default sans-serif font for consistency */
+		padding: 1em; /* Added body padding for breathing room */
+		margin: 0;
+		background-color: #fff; /* Ensure white background for options page */
+		color: #000;
+	  }
+
+	  /* Specific styling for tables within options */
+	  table {
+		width: 100%; /* Ensure table takes full width */
+		margin-bottom: 1em; /* Add some space at the bottom */
+	  }
+</style>
+  </head>
+  <body>
+    <h1>To Anna's Archive!</h1>
+    <div class="separator">Settings (hover for descriptions)</div>
+    <div class="option">
+      <span style="margin-right: 1em;" title="The top level domain for Anna. Since the mirrors are frequently taken down, you can change this to a working link. Note: you must include the https:// and trailing /">
+        Anna's Archive url:
+      </span>
+      <input type="text" title="The top level domain for Anna. Since the mirrors are frequently taken down, you can change this to a working link. Note: you must include the https:// and trailing /" id="url"/>
+    </div>
+    <div class="option">
+      <input type="checkbox" id="newtab"/>
+      <span style="margin-left: 0.5em;" title="Opens Anna's Archive in a new tab instead of the current tab.">
+        Open in a new tab
+      </span>
+    </div>
+    <div class="separator">Mirrors</div>
+    <div>
+      Here is a list of back-up mirrors.
+      Click "select" to automatically paste the mirror into the "Anna's Archive URL" field above.
+    </div>
+    <div>
+      <table id="links" style="margin: auto;">
+        <th style="background-color: whitesmoke;" colspan="2">
+          Anna's Archive back-up mirrors:
+        </th>
+      </table>
+    </div>
+    <div style="clear:both"></div>
+    <div style="margin:auto">
+      <p style="float:left; width:70px;">Legend:</p>
+      <p style="background-color: lightgreen; float:left; text-align: center; width:110px;">working</p>
+      <p style="background-color: yellow; float:left; text-align: center; width:110px;">likely working</p>
+      <p style="background-color: pink; float:left; text-align: center; width:110px;">not working</p>
+      <p style="background-color: #aaa; float:left; text-align: center; width:110px;">loading</p>
+    <div style="clear:both"></div>
+    <hr />
+  </body>
+  <script src="options/options.js"></script>
+</html>

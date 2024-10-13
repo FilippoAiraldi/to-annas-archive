@@ -1,0 +1,38 @@
+{
+	"manifest_version": 3,
+	"name": "To Anna's Archive",
+	"short_name": "to-annas-archive",
+	"version": "0.0.0",
+	"author": "Filippo Airaldi",
+	"homepage_url": "https://github.com/FilippoAiraldi/to-annas-archive",
+	"description": "Quickly search your article in Anna's Archive",
+	"icons": {
+		"16": "icons/96x96.png",
+		"32": "icons/32x32.png",
+		"48": "icons/48x48.png",
+		"64": "icons/64x64.png",
+		"96": "icons/96x96.png",
+		"128": "icons/128x128.png"
+	},
+	"browser_specific_settings": {
+		"gecko": {
+			"id": "gsfcvdt04@mozmail.com"
+		}
+	},
+	"action": {
+		"default_title": "To Anna's!"
+	},
+	"background": {
+		"scripts": [
+			"background.js"
+		]
+	},
+	"permissions": [
+		"storage"
+	],
+	"options_page": "options/options.html",
+	"options_ui": {
+		"page": "options/options.html",
+		"browser_style": true
+	}
+}
