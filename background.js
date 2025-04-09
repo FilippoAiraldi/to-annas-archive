@@ -39,22 +39,105 @@ function identifyWebsite(url) {
 function extractArticleData(website) {
     // NOTE: this function runs in the context of the webpage, not the background script
     // and does not have access to the background script's variables or functions.
+
+    // we try to extract title, authors, and DOI from the page. If the authors are
+    // missing, it's not a big deal. If both title and DOI are missing, the extraction
+    // failed.
+
     switch (website) {
         case "IEEEXplore":
-            return null;
+            if (typeof xplGlobal === 'undefined') {
+                return null;
+            }
+            var title = xplGlobal?.document?.metadata?.title;
+            var doi = xplGlobal?.document?.metadata?.doi;
+            try {
+                var authors = xplGlobal?.document?.metadata?.authors?.map(
+                    author => author?.name
+                )?.join(', ');
+            } catch {
+                var authors = undefined;
+            }
+            break;
+
         case "Oxford Academic":
-            return null;
+            if (typeof dataLayer === 'undefined') {
+                return null;
+            }
+            var title = dataLayer[0]?.full_title;
+            var doi = dataLayer[0]?.doi;
+            var authors = dataLayer[0]?.authors;
+            break;
+
         case "Springer Link":
-            return null;
+            var title = document?.querySelector('h1.c-article-title')?.textContent;
+            var doi = dataLayer[0].DOI;
+            try {
+                var authors = Array.from(
+                    document?.querySelectorAll("a[data-test='author-name']")
+                )?.map(item => item?.textContent)?.join(', ');
+            } catch {
+                var authors = undefined;
+            }
+            break;
+
         case "ScienceDirect":
-            return null;
+            var title = document?.querySelector('span.title-text')?.textContent;
+            var doi = document?.querySelector(
+                'a.anchor.doi.anchor-primary'
+            )?.querySelector('span.anchor-text')?.textContent?.slice(16);
+            try {
+                var authors = Array.from(
+                    document?.getElementsByClassName('text surname')
+                )?.map(item => item?.textContent)?.join(', ');
+            } catch {
+                var authors = undefined;
+            }
+            break;
+
         case "PubMed":
-            return null;
+            var title = document?.querySelector('h1.heading-title')?.textContent?.trim();
+            var doi = document?.querySelector('.doi')?.children[1]?.textContent?.trim();
+            try {
+                var authors = Array.from(
+                    document?.querySelectorAll('.authors-list-item')
+                )?.map(item => item?.firstChild?.textContent)?.join(', ');
+            } catch {
+                var authors = undefined;
+            }
+            break;
+
         case "JSTOR":
-            return null;
+            if (typeof dataLayer === 'undefined') {
+                return null;
+            }
+            var title = dataLayer[0]?.content?.chapterTitle;
+            if (!title) {
+                title = dataLayer[0]?.content?.itemTitle;
+            }
+            var doi = dataLayer[0]?.content?.objectDOI;
+            try {
+                var authors = Array.from(
+                    document?.querySelectorAll("mfe-content-details-pharos-link[data-qa='item-authors']")
+                )?.map(item => item?.textContent)?.join(', ');
+            } catch {
+                var authors = undefined;
+            }
+            if (!authors) {
+                authors = document?.querySelector('p.content-meta-data__authors')?.textContent;
+            }
+            break;
+
         default:
             return null;
     }
+
+    // if both title and doi are null, we return null
+    if (!title && !doi) {
+        console.warn('[BACKGROUND] Failed to extract article data:', website);
+        return null;
+    }
+    return {title: title, authors: authors, doi: doi};
 }
 
 /**
@@ -113,9 +196,10 @@ function openAnnasArchive() {
                 browser.scripting.executeScript({
                     target: { tabId: currentTab.id },
                     func: extractArticleData,
-                    args: [website]
+                    args: [website],
+                    world: "MAIN"  // needed to access context of the page
                 }).then(results => {
-                    console.log('[BACKGROUND] AFTER EXTRACTING', results);
+                    const extractedData = results[0].result;
                 }).catch(error => {
                     console.error('[BACKGROUND] Error extracting data:', error);
                     showNotification(`\"${shortTitle}\" recognized from ${website}, but got error during parsing: ${error.message}`);

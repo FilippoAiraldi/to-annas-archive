@@ -24,5 +24,6 @@ Array.from(document.querySelectorAll('.authors-list-item')).map(item => item.fir
 document.querySelector('.doi').children[1].textContent.trim()
 
 JSTOR) https://www.jstor.org/
-dataLayer[0].itemTitle
+dataLayer[0].content.chapterTitle
 Array.from(document.querySelectorAll("mfe-content-details-pharos-link[data-qa='item-authors']")).map(item => item.textContent).join(', ')    OR    document.querySelector('p.content-meta-data__authors').textContent
+dataLayer[0].content.objectDOI
