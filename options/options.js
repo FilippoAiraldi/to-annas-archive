@@ -6,6 +6,41 @@ var links;
 var linksTable = document.getElementById("links");
 var linksCounts = [];
 
+// Default options
+const defaultOptions = {
+    url: "https://annas-archive.org/",
+    openInNewTab: true
+};
+
+// Function to save options to storage
+function saveOptions() {
+    const options = {
+        url: document.getElementById("url").value,
+        openInNewTab: document.getElementById("open-in-new-tab").checked
+    };
+
+    browser.storage.sync.set(options)
+        .then(() => console.log('[OPTIONS] Options saved'))
+        .catch(error => console.error('[OPTIONS] Error saving options:', error));
+}
+
+// Function to load options from storage
+function loadOptions() {
+    browser.storage.sync.get(defaultOptions)
+        .then(result => {
+            document.getElementById("url").value = result.url;
+            document.getElementById("open-in-new-tab").checked = result.openInNewTab;
+        })
+        .catch(error => console.error('[OPTIONS] Error loading options:', error));
+}
+
+// Add event listeners to save options when changed
+document.getElementById("url").addEventListener('change', saveOptions);
+document.getElementById("open-in-new-tab").addEventListener('change', saveOptions);
+
+// Load options when page is opened
+document.addEventListener('DOMContentLoaded', loadOptions);
+
 function getField(propname) {
     return document.getElementById(propnameFieldnameMap[propname]);
 }
@@ -13,8 +48,8 @@ function getField(propname) {
 function setUrl(links, i) {
     const field = document.getElementById("url");
     field.value = links[i];
-    // propnameValueCache["url"] = links[i];
-    field.onchange();
+    // Save options when a mirror URL is selected
+    saveOptions();
 }
 
 function checkServerStatus(links, i) {
