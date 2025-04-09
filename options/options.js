@@ -2,17 +2,15 @@
 
 const mirrorsDb = "https://raw.githubusercontent.com/FilippoAiraldi/to-annas-archive/refs/heads/master/data/mirrors.json";
 const imgName = "favicon.ico"
-var links;
 var linksTable = document.getElementById("links");
 var linksCounts = [];
-
-// Default options
+let mirrorsCache = null;
 const defaultOptions = {
     url: "https://annas-archive.org/",
     openInNewTab: true
 };
 
-// Function to save options to storage
+// function to save options to storage
 function saveOptions() {
     const options = {
         url: document.getElementById("url").value,
@@ -24,7 +22,7 @@ function saveOptions() {
         .catch(error => console.error('[OPTIONS] Error saving options:', error));
 }
 
-// Function to load options from storage
+// function to load options from storage
 function loadOptions() {
     browser.storage.sync.get(defaultOptions)
         .then(result => {
@@ -34,11 +32,11 @@ function loadOptions() {
         .catch(error => console.error('[OPTIONS] Error loading options:', error));
 }
 
-// Add event listeners to save options when changed
+// add event listeners to save options when changed
 document.getElementById("url").addEventListener('change', saveOptions);
 document.getElementById("open-in-new-tab").addEventListener('change', saveOptions);
 
-// Load options when page is opened
+// load options when page is opened
 document.addEventListener('DOMContentLoaded', loadOptions);
 
 function getField(propname) {
@@ -67,12 +65,17 @@ function checkServerStatus(links, i) {
 
 async function fillUrls() {
     try {
-        const response = await fetch(mirrorsDb);
-        if (!response.ok) {
-            throw new Error(`failed to fetch URLs: ${response.statusText}`);
+        // use cached mirrors if available, otherwise fetch them
+        if (!mirrorsCache) {
+            const response = await fetch(mirrorsDb);
+            if (!response.ok) {
+                throw new Error(`failed to fetch URLs: ${response.statusText}`);
+            }
+            mirrorsCache = await response.json();
+            console.log('[OPTIONS] Mirrors data cached successfully');
         }
 
-        const links = await response.json();
+        const links = mirrorsCache;
 
         for (let i = 0; i < links.length; ++i) {
             linksCounts.push([0, 0]);
@@ -95,6 +98,7 @@ async function fillUrls() {
         }
     } catch (error) {
         console.error('[OPTIONS] Error occurred while fetching URLs:', error);
+        mirrorsCache = null; // reset cache on error to try again next time
     }
 }
 
