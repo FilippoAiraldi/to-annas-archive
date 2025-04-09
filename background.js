@@ -50,6 +50,62 @@ async function identifyWebsite(url) {
 }
 
 /**
+ * Function to be injected into the page to extract article data
+ */
+function extractArticleData(extractors) {
+    try {
+        const title = eval(extractors.title);
+        const authors = eval(extractors.authors);
+        const doi = extractors.doi ? eval(extractors.doi) : '';
+
+        return {
+            title: title || '',
+            authors: authors || '',
+            doi: doi || ''
+        };
+    } catch (error) {
+        console.error('Error extracting article data:', error);
+        return null;
+    }
+}
+
+/**
+ * Opens a URL in either a new tab or the current tab
+ */
+function openUrl(url, openInNewTab) {
+    if (openInNewTab) {
+        browser.tabs.create({ url: url });
+    } else {
+        browser.tabs.query({ active: true, currentWindow: true })
+            .then(tabs => {
+                if (tabs[0]) {
+                    browser.tabs.update(tabs[0].id, { url: url });
+                } else {
+                    showNotification("No active tab found to navigate.");
+                }
+            });
+    }
+}
+
+/**
+ * Opens Anna's Archive with search parameters
+ */
+function searchAnnasArchive(articleData) {
+    browser.storage.sync.get(defaultOptions)
+        .then(options => {
+            // Create search URL with extracted data
+            let searchQuery = encodeURIComponent(`${articleData.title} ${articleData.authors}`.trim());
+            const targetUrl = `${options.url}search?q=${searchQuery}`;
+
+            openUrl(targetUrl, options.openInNewTab);
+        })
+        .catch(error => {
+            console.error('[BACKGROUND] Error retrieving options:', error);
+            showNotification(`Error retrieving options: ${error.message}`);
+        });
+}
+
+/**
  * Opens Anna's Archive with the current options
  * Uses user-selected options from storage
  */
@@ -90,61 +146,4 @@ function openAnnasArchive() {
         });
 }
 
-/**
- * Function to be injected into the page to extract article data
- */
-function extractArticleData(extractors) {
-    try {
-        const title = eval(extractors.title);
-        const authors = eval(extractors.authors);
-        const doi = extractors.doi ? eval(extractors.doi) : '';
-
-        return {
-            title: title || '',
-            authors: authors || '',
-            doi: doi || ''
-        };
-    } catch (error) {
-        console.error('Error extracting article data:', error);
-        return null;
-    }
-}
-
-/**
- * Opens Anna's Archive with search parameters
- */
-function searchAnnasArchive(articleData) {
-    browser.storage.sync.get(defaultOptions)
-        .then(options => {
-            // Create search URL with extracted data
-            let searchQuery = encodeURIComponent(`${articleData.title} ${articleData.authors}`.trim());
-            const targetUrl = `${options.url}search?q=${searchQuery}`;
-
-            openUrl(targetUrl, options.openInNewTab);
-        })
-        .catch(error => {
-            console.error('[BACKGROUND] Error retrieving options:', error);
-            showNotification(`Error retrieving options: ${error.message}`);
-        });
-}
-
-/**
- * Opens a URL in either a new tab or the current tab
- */
-function openUrl(url, openInNewTab) {
-    if (openInNewTab) {
-        browser.tabs.create({ url: url });
-    } else {
-        browser.tabs.query({ active: true, currentWindow: true })
-            .then(tabs => {
-                if (tabs[0]) {
-                    browser.tabs.update(tabs[0].id, { url: url });
-                } else {
-                    showNotification("No active tab found to navigate.");
-                }
-            });
-    }
-}
-
-// Listen for extension icon clicks
 browser.action.onClicked.addListener(openAnnasArchive);
