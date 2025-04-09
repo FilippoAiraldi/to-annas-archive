@@ -1,11 +1,42 @@
 'use strict';
 
-const defaultOptions = {
+const DEFAULT_OPTS = {
     url: "https://annas-archive.org/",
     openInNewTab: true
 };
-const extractorsDb = "https://raw.githubusercontent.com/FilippoAiraldi/to-annas-archive/refs/heads/master/data/extractors.json";
-let extractorsCache = null;
+const WEBSITES = [
+    {
+        name: "IEEEXplore",
+        // url: "https://ieeexplore.ieee.org/",
+        urlmatch: "ieeexplore",
+    },
+    {
+        name: "Oxford Academic",
+        // url: "https://academic.oup.com/",
+        urlmatch: "academic.oup",
+    },
+    {
+        name: "Springer Link",
+        // url: "https://link.springer.com/",
+        urlmatch: "springer",
+    },
+    {
+        name: "ScienceDirect",
+        // url: "https://www.sciencedirect.com/",
+        urlmatch: "sciencedirect",
+    },
+    {
+        name: "PubMed",
+        // url: "https://pubmed.ncbi.nlm.nih.gov/",
+        urlmatch: "pubmed",
+    },
+    {
+        name: "JSTOR",
+        // url: "https://www.jstor.org/",
+        urlmatch: "jstor",
+    }
+];
+
 
 /**
  * Shows a notification to the user
@@ -25,28 +56,15 @@ function showNotification(message) {
  * @param {string} url - The URL of the current tab
  * @returns {object|null} The extractor object for the identified site, or null if not found
  */
-async function identifyWebsite(url) {
-    try {
-        // use cached extractors if available, otherwise fetch them
-        if (!extractorsCache) {
-            const response = await fetch(extractorsDb);
-            extractorsCache = await response.json();
-            console.log('[BACKGROUND] Extractors data cached successfully');
+function identifyWebsite(url) {
+    // check each extractor for a match with the current URL
+    const url_lower = url.toLowerCase();
+    for (const website of WEBSITES) {
+        if (url_lower.includes(website.urlmatch.toLowerCase())) {
+            return website;
         }
-
-        // check each extractor for a match with the current URL
-        for (const extractor of extractorsCache) {
-            if (url.toLowerCase().includes(extractor.urlmatch.toLowerCase())) {
-                return extractor;
-            }
-        }
-        return null;
-    } catch (error) {
-        console.error('[BACKGROUND] Error loading extractors:', error);
-        extractorsCache = null; // reset cache on error to try again next time
-        showNotification(`Error loading extractors: ${error.message}`);
-        return null;
     }
+    return null;
 }
 
 /**
@@ -91,7 +109,7 @@ function openUrl(url, openInNewTab) {
  * Opens Anna's Archive with search parameters
  */
 function searchAnnasArchive(articleData) {
-    browser.storage.sync.get(defaultOptions)
+    browser.storage.sync.get(DEFAULT_OPTS)
         .then(options => {
             // Create search URL with extracted data
             let searchQuery = encodeURIComponent(`${articleData.title} ${articleData.authors}`.trim());
@@ -119,10 +137,9 @@ function openAnnasArchive() {
 
             const currentTab = tabs[0];
             const currentUrl = currentTab.url;
+            const website = identifyWebsite(currentUrl);
 
-            // identify which academic site we're on
-            const extractor = await identifyWebsite(currentUrl);
-            if (extractor) {
+            if (website) {
                 // we're on a supported academic site, extract data and search on Anna's Archive
                 browser.scripting.executeScript({
                     target: { tabId: currentTab.id },
@@ -140,8 +157,12 @@ function openAnnasArchive() {
                     showNotification(`Error extracting data: ${error.message}`);
                 });
             } else {
-                // not on a supported academic site
-                showNotification("Current page is not recognized as an academic site.");
+                var title = currentTab.title;
+                if (title.length > 50) {
+                    title = title.substring(0, 50) + '...';
+                }
+                console.warn('[BACKGROUND] failed to recognize tab:', currentTab);
+                showNotification(`\"${title}\" is not recognized as an academic site.`);
             }
         });
 }
