@@ -5,43 +5,15 @@ const DEFAULT_OPTS = {
     openInNewTab: true
 };
 const WEBSITES = [
-    {
-        name: "IEEEXplore",
-        // url: "https://ieeexplore.ieee.org/",
-        urlmatch: "ieeexplore",
-    },
-    {
-        name: "Oxford Academic",
-        // url: "https://academic.oup.com/",
-        urlmatch: "academic.oup",
-    },
-    {
-        name: "Springer Link",
-        // url: "https://link.springer.com/",
-        urlmatch: "springer",
-    },
-    {
-        name: "ScienceDirect",
-        // url: "https://www.sciencedirect.com/",
-        urlmatch: "sciencedirect",
-    },
-    {
-        name: "PubMed",
-        // url: "https://pubmed.ncbi.nlm.nih.gov/",
-        urlmatch: "pubmed",
-    },
-    {
-        name: "JSTOR",
-        // url: "https://www.jstor.org/",
-        urlmatch: "jstor",
-    }
+    {name: "IEEEXplore", urlmatch: "ieeexplore"},
+    {name: "Oxford Academic", urlmatch: "academic.oup"},
+    {name: "Springer Link", urlmatch: "springer"},
+    {name: "ScienceDirect", urlmatch: "sciencedirect"},
+    {name: "PubMed", urlmatch: "pubmed"},
+    {name: "JSTOR", urlmatch: "jstor"}
 ];
 
 
-/**
- * Shows a notification to the user
- * @param {string} message - The message to display in the notification
- */
 function showNotification(message) {
     browser.notifications.create({
         type: "basic",
@@ -51,17 +23,11 @@ function showNotification(message) {
     });
 }
 
-/**
- * Determines which academic site the current tab is on
- * @param {string} url - The URL of the current tab
- * @returns {object|null} The extractor object for the identified site, or null if not found
- */
 function identifyWebsite(url) {
-    // check each extractor for a match with the current URL
     const url_lower = url.toLowerCase();
     for (const website of WEBSITES) {
         if (url_lower.includes(website.urlmatch.toLowerCase())) {
-            return website;
+            return website.name;
         }
     }
     return null;
@@ -70,20 +36,24 @@ function identifyWebsite(url) {
 /**
  * Function to be injected into the page to extract article data
  */
-function extractArticleData(extractors) {
-    try {
-        const title = eval(extractors.title);
-        const authors = eval(extractors.authors);
-        const doi = extractors.doi ? eval(extractors.doi) : '';
-
-        return {
-            title: title || '',
-            authors: authors || '',
-            doi: doi || ''
-        };
-    } catch (error) {
-        console.error('Error extracting article data:', error);
-        return null;
+function extractArticleData(website) {
+    // NOTE: this function runs in the context of the webpage, not the background script
+    // and does not have access to the background script's variables or functions.
+    switch (website) {
+        case "IEEEXplore":
+            return null;
+        case "Oxford Academic":
+            return null;
+        case "Springer Link":
+            return null;
+        case "ScienceDirect":
+            return null;
+        case "PubMed":
+            return null;
+        case "JSTOR":
+            return null;
+        default:
+            return null;
     }
 }
 
@@ -123,10 +93,6 @@ function searchAnnasArchive(articleData) {
         });
 }
 
-/**
- * Opens Anna's Archive with the current options
- * Uses user-selected options from storage
- */
 function openAnnasArchive() {
     browser.tabs.query({ active: true, currentWindow: true })
         .then(async tabs => {
@@ -137,24 +103,22 @@ function openAnnasArchive() {
 
             const currentTab = tabs[0];
             const currentUrl = currentTab.url;
+            var shortTitle = currentTab.title;
+            if (shortTitle.length > 50) {
+                shortTitle = shortTitle.substring(0, 50) + '...';
+            }
             const website = identifyWebsite(currentUrl);
 
             if (website) {
-                // we're on a supported academic site, extract data and search on Anna's Archive
                 browser.scripting.executeScript({
                     target: { tabId: currentTab.id },
                     func: extractArticleData,
-                    args: [extractor.extractors]
+                    args: [website]
                 }).then(results => {
-                    const extractedData = results[0].result;
-                    if (extractedData) {
-                        searchAnnasArchive(extractedData);
-                    } else {
-                        showNotification("Could not extract article data from the current page.");
-                    }
+                    console.log('[BACKGROUND] AFTER EXTRACTING', results);
                 }).catch(error => {
                     console.error('[BACKGROUND] Error extracting data:', error);
-                    showNotification(`Error extracting data: ${error.message}`);
+                    showNotification(`\"${shortTitle}\" recognized from ${website}, but got error during parsing: ${error.message}`);
                 });
             } else {
                 var title = currentTab.title;
@@ -162,7 +126,7 @@ function openAnnasArchive() {
                     title = title.substring(0, 50) + '...';
                 }
                 console.warn('[BACKGROUND] failed to recognize tab:', currentTab);
-                showNotification(`\"${title}\" is not recognized as an academic site.`);
+                showNotification(`\"${shortTitle}\" is not recognized as an academic site.`);
             }
         });
 }
