@@ -8,6 +8,19 @@ const extractorsDb = "https://raw.githubusercontent.com/FilippoAiraldi/to-annas-
 let extractorsCache = null;
 
 /**
+ * Shows a notification to the user
+ * @param {string} message - The message to display in the notification
+ */
+function showNotification(message) {
+    browser.notifications.create({
+        type: "basic",
+        iconUrl: browser.runtime.getURL("icons/96x96.png"),
+        title: "To Anna's Archive",
+        message: message
+    });
+}
+
+/**
  * Determines which academic site the current tab is on
  * @param {string} url - The URL of the current tab
  * @returns {object|null} The extractor object for the identified site, or null if not found
@@ -31,6 +44,7 @@ async function identifyWebsite(url) {
     } catch (error) {
         console.error('[BACKGROUND] Error loading extractors:', error);
         extractorsCache = null; // reset cache on error to try again next time
+        showNotification(`Error loading extractors: ${error.message}`);
         return null;
     }
 }
@@ -43,7 +57,7 @@ function openAnnasArchive() {
     browser.tabs.query({ active: true, currentWindow: true })
         .then(async tabs => {
             if (!tabs || !tabs[0]) {
-                openDefaultAnnasPage();
+                showNotification("No active tab found.");
                 return;
             }
 
@@ -63,15 +77,15 @@ function openAnnasArchive() {
                     if (extractedData) {
                         searchAnnasArchive(extractedData);
                     } else {
-                        openDefaultAnnasPage();
+                        showNotification("Could not extract article data from the current page.");
                     }
                 }).catch(error => {
                     console.error('[BACKGROUND] Error extracting data:', error);
-                    openDefaultAnnasPage();
+                    showNotification(`Error extracting data: ${error.message}`);
                 });
             } else {
-                // not on a supported academic site, just open Anna's Archive
-                openDefaultAnnasPage();
+                // not on a supported academic site
+                showNotification("Current page is not recognized as an academic site.");
             }
         });
 }
@@ -110,21 +124,7 @@ function searchAnnasArchive(articleData) {
         })
         .catch(error => {
             console.error('[BACKGROUND] Error retrieving options:', error);
-            openDefaultAnnasPage();
-        });
-}
-
-/**
- * Opens the default Anna's Archive page
- */
-function openDefaultAnnasPage() {
-    browser.storage.sync.get(defaultOptions)
-        .then(options => {
-            openUrl(options.url, options.openInNewTab);
-        })
-        .catch(error => {
-            console.error('[BACKGROUND] Error retrieving options:', error);
-            browser.tabs.create({ url: defaultOptions.url });
+            showNotification(`Error retrieving options: ${error.message}`);
         });
 }
 
@@ -140,8 +140,7 @@ function openUrl(url, openInNewTab) {
                 if (tabs[0]) {
                     browser.tabs.update(tabs[0].id, { url: url });
                 } else {
-                    // Fallback if no active tab is found
-                    browser.tabs.create({ url: url });
+                    showNotification("No active tab found to navigate.");
                 }
             });
     }

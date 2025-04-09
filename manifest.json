@@ -29,7 +29,9 @@
     },
     "permissions": [
         "storage",
-        "tabs"
+        "tabs",
+        "notifications",
+        "scripting"
     ],
     "options_page": "options/options.html",
     "options_ui": {
