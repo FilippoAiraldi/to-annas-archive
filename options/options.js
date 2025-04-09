@@ -1,16 +1,18 @@
 'use strict';
 
-const mirrorsDb = "https://raw.githubusercontent.com/FilippoAiraldi/to-annas-archive/refs/heads/master/data/mirrors.json";
-const imgName = "favicon.ico"
+const MIRRORS = [
+    "https://annas-archive.org/",
+    "https://annas-archive.se/",
+    "https://annas-archive.li/",
+    "https://kmr.annas-archive.org/"
+];
+const IMG_NAME = "favicon.ico";
+const DEFAULT_OPTS = {url: "https://annas-archive.org/", openInNewTab: true};
+
 var linksTable = document.getElementById("links");
 var linksCounts = [];
-let mirrorsCache = null;
-const defaultOptions = {
-    url: "https://annas-archive.org/",
-    openInNewTab: true
-};
 
-// function to save options to storage
+
 function saveOptions() {
     const options = {
         url: document.getElementById("url").value,
@@ -22,9 +24,12 @@ function saveOptions() {
         .catch(error => console.error('[OPTIONS] Error saving options:', error));
 }
 
-// function to load options from storage
+document.getElementById("url").addEventListener('change', saveOptions);
+document.getElementById("open-in-new-tab").addEventListener('change', saveOptions);
+
+
 function loadOptions() {
-    browser.storage.sync.get(defaultOptions)
+    browser.storage.sync.get(DEFAULT_OPTS)
         .then(result => {
             document.getElementById("url").value = result.url;
             document.getElementById("open-in-new-tab").checked = result.openInNewTab;
@@ -32,25 +37,20 @@ function loadOptions() {
         .catch(error => console.error('[OPTIONS] Error loading options:', error));
 }
 
-// add event listeners to save options when changed
-document.getElementById("url").addEventListener('change', saveOptions);
-document.getElementById("open-in-new-tab").addEventListener('change', saveOptions);
-
-// load options when page is opened
 document.addEventListener('DOMContentLoaded', loadOptions);
+
 
 function getField(propname) {
     return document.getElementById(propnameFieldnameMap[propname]);
 }
 
-function setUrl(links, i) {
+function setUrl(i) {
     const field = document.getElementById("url");
-    field.value = links[i];
-    // Save options when a mirror URL is selected
-    saveOptions();
+    field.value = MIRRORS[i];
+    saveOptions();  // save options when a mirror URL is selected
 }
 
-function checkServerStatus(links, i) {
+function checkServerStatus(i) {
     function callback(ok) {
         linksTable.rows[i + 1].style.backgroundColor = ok ? "lightgreen" : "pink"
     }
@@ -60,45 +60,32 @@ function checkServerStatus(links, i) {
     img.visibility = "hidden";
     img.onload = function () { return callback(true); };
     img.onerror = function () { return callback(false); }
-    img.src = links[i] + imgName;
+    img.src = MIRRORS[i] + IMG_NAME;
 }
 
 async function fillUrls() {
     try {
-        // use cached mirrors if available, otherwise fetch them
-        if (!mirrorsCache) {
-            const response = await fetch(mirrorsDb);
-            if (!response.ok) {
-                throw new Error(`failed to fetch URLs: ${response.statusText}`);
-            }
-            mirrorsCache = await response.json();
-            console.log('[OPTIONS] Mirrors data cached successfully');
-        }
-
-        const links = mirrorsCache;
-
-        for (let i = 0; i < links.length; ++i) {
+        for (let i = 0; i < MIRRORS.length; ++i) {
             linksCounts.push([0, 0]);
             const row = linksTable.insertRow();
 
             const linkCell = row.insertCell(0);
-            linkCell.textContent = links[i];
+            linkCell.textContent = MIRRORS[i];
 
             const buttonCell = row.insertCell(1);
             const button = document.createElement("button");
             button.textContent = "Select";
             button.id = "link" + i;
             buttonCell.appendChild(button);
-            button.addEventListener("click", () => setUrl(links, i));
+            button.addEventListener("click", () => setUrl(i));
         }
 
-        for (let i = 0; i < links.length; ++i) {
+        for (let i = 0; i < MIRRORS.length; ++i) {
             linksTable.rows[i + 1].style.backgroundColor = "#aaa";
-            setTimeout(checkServerStatus, 250, links, i);
+            setTimeout(checkServerStatus, 250, i);
         }
     } catch (error) {
         console.error('[OPTIONS] Error occurred while fetching URLs:', error);
-        mirrorsCache = null; // reset cache on error to try again next time
     }
 }
 
