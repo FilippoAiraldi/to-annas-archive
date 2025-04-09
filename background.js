@@ -1,10 +1,11 @@
 'use strict';
 
-// default options in case storage fails
 const defaultOptions = {
     url: "https://annas-archive.org/",
     openInNewTab: true
 };
+const extractorsDb = "https://raw.githubusercontent.com/FilippoAiraldi/to-annas-archive/refs/heads/master/data/extractors.json";
+let extractorsCache = null;
 
 /**
  * Determines which academic site the current tab is on
@@ -13,19 +14,23 @@ const defaultOptions = {
  */
 async function identifyWebsite(url) {
     try {
-        // Fetch the extractors from file
-        const response = await fetch(browser.runtime.getURL('data/extractors.json'));
-        const extractors = await response.json();
+        // use cached extractors if available, otherwise fetch them
+        if (!extractorsCache) {
+            const response = await fetch(extractorsDb);
+            extractorsCache = await response.json();
+            console.log('[BACKGROUND] Extractors data cached successfully');
+        }
 
-        // Check each site's identifier in the URL
-        for (const site of extractors) {
-            if (url.toLowerCase().includes(site.urlmatch.toLowerCase())) {
-                return site;
+        // check each extractor for a match with the current URL
+        for (const extractor of extractorsCache) {
+            if (url.toLowerCase().includes(extractor.urlmatch.toLowerCase())) {
+                return extractor;
             }
         }
         return null;
     } catch (error) {
         console.error('[BACKGROUND] Error loading extractors:', error);
+        extractorsCache = null; // reset cache on error to try again next time
         return null;
     }
 }
@@ -46,13 +51,13 @@ function openAnnasArchive() {
             const currentUrl = currentTab.url;
 
             // identify which academic site we're on
-            const site = await identifyWebsite(currentUrl);
-            if (site) {
+            const extractor = await identifyWebsite(currentUrl);
+            if (extractor) {
                 // we're on a supported academic site, extract data and search on Anna's Archive
                 browser.scripting.executeScript({
                     target: { tabId: currentTab.id },
                     func: extractArticleData,
-                    args: [site.extractors]
+                    args: [extractor.extractors]
                 }).then(results => {
                     const extractedData = results[0].result;
                     if (extractedData) {
