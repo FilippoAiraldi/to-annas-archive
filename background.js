@@ -90,9 +90,6 @@ function extractDoi(website) {
     return doi;
 }
 
-/**
- * Opens a URL in either a new tab or the current tab
- */
 function openUrl(url, openInNewTab) {
     if (openInNewTab) {
         browser.tabs.create({ url: url });
@@ -111,15 +108,12 @@ function openUrl(url, openInNewTab) {
 function searchAnnasArchive(articleDoi) {
     browser.storage.sync.get(DEFAULT_OPTS)
         .then(options => {
-            // Create search URL with extracted data
-            let searchQuery = encodeURIComponent(`${articleData.title} ${articleData.authors}`.trim());
-            const targetUrl = `${options.url}search?q=${searchQuery}`;
-
-            openUrl(targetUrl, options.openInNewTab);
+            const targetUrl = new URL("scidb/" + articleDoi.toLowerCase(), options.url);
+            openUrl(targetUrl.toString(), options.openInNewTab);
         })
         .catch(error => {
-            console.error('[BACKGROUND] Error retrieving options:', error);
-            showNotification(`Error retrieving options: ${error.message}`);
+            console.error('[BACKGROUND] Error opening URL to Anna\'s Archive:', error);
+            showNotification(`Error opening URL to Anna's Archive: ${error.message}`);
         });
 }
 
