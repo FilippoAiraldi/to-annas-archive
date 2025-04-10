@@ -33,94 +33,48 @@ function identifyWebsite(url) {
     return null;
 }
 
-function extractArticleData(website) {
+function extractDoi(website) {
     // NOTE: this function runs in the context of the webpage, not the background script
     // and does not have access to the background script's variables or functions.
 
-    // we try to extract title, authors, and DOI from the page. If the authors are
-    // missing, it's not a big deal. If both title and DOI are missing, the extraction
-    // failed. If the website is not recognized, we try to regex for the DOI.
-    var title = undefined;
     var doi = undefined;
-    var authors = undefined;
 
     switch (website) {
         case "IEEEXplore":
             if (typeof xplGlobal !== 'undefined') {
-                title = xplGlobal?.document?.metadata?.title;
                 doi = xplGlobal?.document?.metadata?.doi;
-                try {
-                    const authors_array = xplGlobal?.document?.metadata?.authors;
-                    authors = authors_array?.map(item => item?.name)?.join(', ');
-                } catch {
-                    authors = undefined;
-                }
             }
             break;
 
         case "Oxford Academic":
             if (typeof dataLayer !== 'undefined') {
-                title = dataLayer[0]?.full_title;
                 doi = dataLayer[0]?.doi;
-                authors = dataLayer[0]?.authors;
             }
             break;
 
         case "Springer Link":
-            title = document?.querySelector('h1.c-article-title')?.textContent;
-            doi = dataLayer[0].DOI;
-            try {
-                const authors_items = document?.querySelectorAll("a[data-test='author-name']");
-                authors = Array.from(authors_items)?.map(item => item?.textContent)?.join(', ');
-            } catch {
-                authors = undefined;
+            if (typeof dataLayer !== 'undefined') {
+                doi = dataLayer[0]?.DOI;
             }
             break;
 
         case "ScienceDirect":
-            title = document?.querySelector('span.title-text')?.textContent;
             doi = document?.querySelector('a.anchor.doi.anchor-primary')?.querySelector('span.anchor-text')?.textContent?.slice(16);
-            try {
-                const authors_items = document?.getElementsByClassName('text surname');
-                authors = Array.from(authors_items)?.map(item => item?.textContent)?.join(', ');
-            } catch {
-                authors = undefined;
-            }
             break;
 
         case "PubMed":
-            title = document?.querySelector('h1.heading-title')?.textContent?.trim();
             doi = document?.querySelector('.doi')?.children[1]?.textContent?.trim();
-            try {
-                const authors_items = document?.querySelectorAll('.authors-list-item')
-                authors = Array.from(authors_items)?.map(item => item?.firstChild?.textContent)?.join(', ');
-            } catch {
-                authors = undefined;
-            }
             break;
 
         case "JSTOR":
             if (typeof dataLayer !== 'undefined') {
-                title = dataLayer[0]?.content?.chapterTitle;
-                if (!title) {
-                    title = dataLayer[0]?.content?.itemTitle;
-                }
                 doi = dataLayer[0]?.content?.objectDOI;
-            }
-            try {
-                const authors_items = document?.querySelectorAll("mfe-content-details-pharos-link[data-qa='item-authors']");
-                authors = Array.from(authors_items)?.map(item => item?.textContent)?.join(', ');
-            } catch {
-                authors = undefined;
-            }
-            if (!authors) {
-                authors = document?.querySelector('p.content-meta-data__authors')?.textContent;
             }
             break;
     }
 
     // last fallback: regex for DOI
-    if (!title && !doi && !authors && typeof document !== 'undefined') {
+    if (!doi && typeof document !== 'undefined') {
         console.log('[BACKGROUND] Attempting to extract DOI via regex');
         const htmlSource = document?.documentElement?.innerHTML;
         if (htmlSource) {
@@ -133,13 +87,7 @@ function extractArticleData(website) {
             }
         }
     }
-
-    // if both title and doi are null, we return null
-    if (!title && !doi) {
-        console.warn('[BACKGROUND] Failed to extract article data:', website);
-        return null;
-    }
-    return {title: title, authors: authors, doi: doi};
+    return doi;
 }
 
 /**
@@ -160,10 +108,7 @@ function openUrl(url, openInNewTab) {
     }
 }
 
-/**
- * Opens Anna's Archive with search parameters
- */
-function searchAnnasArchive(articleData) {
+function searchAnnasArchive(articleDoi) {
     browser.storage.sync.get(DEFAULT_OPTS)
         .then(options => {
             // Create search URL with extracted data
@@ -197,13 +142,20 @@ function openAnnasArchive() {
             if (website) {
                 browser.scripting.executeScript({
                     target: { tabId: currentTab.id },
-                    func: extractArticleData,
+                    func: extractDoi,
                     args: [website],
                     world: "MAIN"  // needed to access context of the page
                 }).then(results => {
-                    const extractedData = results[0].result;
+                    const extractedDoi = results[0].result;
+                    if (extractedDoi) {
+                        console.log('[BACKGROUND] Successfully extracted DOI:', extractedDoi);
+                        searchAnnasArchive(extractedDoi);
+                    } else {
+                        console.warn('[BACKGROUND] Failed to extract article DOI:', website);
+                        showNotification(`\"${shortTitle}\": could not extract any article DOI.`);
+                    }
                 }).catch(error => {
-                    console.error('[BACKGROUND] Error extracting data:', error);
+                    console.error('[BACKGROUND] Error extracting DOI:', error);
                     showNotification(`\"${shortTitle}\" recognized from ${website}, but got error during parsing: ${error.message}`);
                 });
             } else {
