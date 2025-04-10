@@ -33,13 +33,13 @@ function identifyWebsite(url) {
     return null;
 }
 
-function extractDoi(website) {
+function extractDoi(websiteMatch) {
     // NOTE: this function runs in the context of the webpage, not the background script
     // and does not have access to the background script's variables or functions.
 
     var doi = undefined;
 
-    switch (website) {
+    switch (websiteMatch) {
         case "IEEEXplore":
             if (typeof xplGlobal !== 'undefined') {
                 doi = xplGlobal?.document?.metadata?.doi;
@@ -90,6 +90,38 @@ function extractDoi(website) {
     return doi;
 }
 
+function refineDoi(doi) {
+    doi = doi.toLowerCase().trim();
+    console.log("1", doi)
+    // quotes
+    const quotes = ['"', "'", "‘", "’", "“", "”"];
+    for (const quote of quotes) {
+        console.log("checking", quote)
+        if (doi.startsWith(quote)) {
+            console.log("removing quote", quote)
+            doi = doi.substring(1);
+        } else if (doi.endsWith(quote)) {
+            doi = doi.substring(0, doi.length - 1);
+        }
+    }
+    console.log("2", doi)
+    // prefixes
+    if (doi.startsWith('doi:')) {
+        doi = doi.substring(4);
+    } else if (doi.startsWith('doi')) {
+        doi = doi.substring(3);
+    }
+    console.log("3", doi)
+    // suffixes
+    if (doi.endsWith('.pdf')) {
+        doi = doi.substring(0, doi.length - 4);
+    } else if (doi.endsWith('pdf')) {
+        doi = doi.substring(0, doi.length - 3);
+    }
+    console.log("4", doi)
+    return doi;
+}
+
 function openUrl(url, openInNewTab) {
     if (openInNewTab) {
         browser.tabs.create({ url: url });
@@ -108,7 +140,7 @@ function openUrl(url, openInNewTab) {
 function searchAnnasArchive(articleDoi) {
     browser.storage.sync.get(DEFAULT_OPTS)
         .then(options => {
-            const targetUrl = new URL("scidb/" + articleDoi.toLowerCase(), options.url);
+            const targetUrl = new URL('scidb/' + articleDoi.toLowerCase(), options.url);
             openUrl(targetUrl.toString(), options.openInNewTab);
         })
         .catch(error => {
@@ -133,33 +165,24 @@ function openAnnasArchive() {
             }
             const website = identifyWebsite(currentUrl);
 
-            if (website) {
-                browser.scripting.executeScript({
-                    target: { tabId: currentTab.id },
-                    func: extractDoi,
-                    args: [website],
-                    world: "MAIN"  // needed to access context of the page
-                }).then(results => {
-                    const extractedDoi = results[0].result;
-                    if (extractedDoi) {
-                        console.log('[BACKGROUND] Successfully extracted DOI:', extractedDoi);
-                        searchAnnasArchive(extractedDoi);
-                    } else {
-                        console.warn('[BACKGROUND] Failed to extract article DOI:', website);
-                        showNotification(`\"${shortTitle}\": could not extract any article DOI.`);
-                    }
-                }).catch(error => {
-                    console.error('[BACKGROUND] Error extracting DOI:', error);
-                    showNotification(`\"${shortTitle}\" recognized from ${website}, but got error during parsing: ${error.message}`);
-                });
-            } else {
-                var title = currentTab.title;
-                if (title.length > 50) {
-                    title = title.substring(0, 50) + '...';
+            browser.scripting.executeScript({
+                target: { tabId: currentTab.id },
+                func: extractDoi,
+                args: [website],
+                world: "MAIN"  // needed to access context of the page
+            }).then(results => {
+                const extractedDoi = results[0].result;
+                if (extractedDoi) {
+                    console.log('[BACKGROUND] Successfully extracted DOI:', extractedDoi);
+                    searchAnnasArchive(refineDoi(extractedDoi));
+                } else {
+                    console.warn('[BACKGROUND] Failed to extract article DOI:', currentUrl);
+                    showNotification(`\"${shortTitle}\": could not extract any article DOI.`);
                 }
-                console.warn('[BACKGROUND] failed to recognize tab:', currentTab);
-                showNotification(`\"${shortTitle}\" is not recognized as an academic site.`);
-            }
+            }).catch(error => {
+                console.error('[BACKGROUND] Error extracting article DOI:', error);
+                showNotification(`\"${shortTitle}\": extraction of article DOI failed: ${error.message}`);
+            });
         });
 }
 
