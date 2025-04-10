@@ -33,103 +33,105 @@ function identifyWebsite(url) {
     return null;
 }
 
-/**
- * Function to be injected into the page to extract article data
- */
 function extractArticleData(website) {
     // NOTE: this function runs in the context of the webpage, not the background script
     // and does not have access to the background script's variables or functions.
 
     // we try to extract title, authors, and DOI from the page. If the authors are
     // missing, it's not a big deal. If both title and DOI are missing, the extraction
-    // failed.
+    // failed. If the website is not recognized, we try to regex for the DOI.
+    var title = undefined;
+    var doi = undefined;
+    var authors = undefined;
 
     switch (website) {
         case "IEEEXplore":
-            if (typeof xplGlobal === 'undefined') {
-                return null;
-            }
-            var title = xplGlobal?.document?.metadata?.title;
-            var doi = xplGlobal?.document?.metadata?.doi;
-            try {
-                var authors = xplGlobal?.document?.metadata?.authors?.map(
-                    author => author?.name
-                )?.join(', ');
-            } catch {
-                var authors = undefined;
+            if (typeof xplGlobal !== 'undefined') {
+                title = xplGlobal?.document?.metadata?.title;
+                doi = xplGlobal?.document?.metadata?.doi;
+                try {
+                    const authors_array = xplGlobal?.document?.metadata?.authors;
+                    authors = authors_array?.map(item => item?.name)?.join(', ');
+                } catch {
+                    authors = undefined;
+                }
             }
             break;
 
         case "Oxford Academic":
-            if (typeof dataLayer === 'undefined') {
-                return null;
+            if (typeof dataLayer !== 'undefined') {
+                title = dataLayer[0]?.full_title;
+                doi = dataLayer[0]?.doi;
+                authors = dataLayer[0]?.authors;
             }
-            var title = dataLayer[0]?.full_title;
-            var doi = dataLayer[0]?.doi;
-            var authors = dataLayer[0]?.authors;
             break;
 
         case "Springer Link":
-            var title = document?.querySelector('h1.c-article-title')?.textContent;
-            var doi = dataLayer[0].DOI;
+            title = document?.querySelector('h1.c-article-title')?.textContent;
+            doi = dataLayer[0].DOI;
             try {
-                var authors = Array.from(
-                    document?.querySelectorAll("a[data-test='author-name']")
-                )?.map(item => item?.textContent)?.join(', ');
+                const authors_items = document?.querySelectorAll("a[data-test='author-name']");
+                authors = Array.from(authors_items)?.map(item => item?.textContent)?.join(', ');
             } catch {
-                var authors = undefined;
+                authors = undefined;
             }
             break;
 
         case "ScienceDirect":
-            var title = document?.querySelector('span.title-text')?.textContent;
-            var doi = document?.querySelector(
-                'a.anchor.doi.anchor-primary'
-            )?.querySelector('span.anchor-text')?.textContent?.slice(16);
+            title = document?.querySelector('span.title-text')?.textContent;
+            doi = document?.querySelector('a.anchor.doi.anchor-primary')?.querySelector('span.anchor-text')?.textContent?.slice(16);
             try {
-                var authors = Array.from(
-                    document?.getElementsByClassName('text surname')
-                )?.map(item => item?.textContent)?.join(', ');
+                const authors_items = document?.getElementsByClassName('text surname');
+                authors = Array.from(authors_items)?.map(item => item?.textContent)?.join(', ');
             } catch {
-                var authors = undefined;
+                authors = undefined;
             }
             break;
 
         case "PubMed":
-            var title = document?.querySelector('h1.heading-title')?.textContent?.trim();
-            var doi = document?.querySelector('.doi')?.children[1]?.textContent?.trim();
+            title = document?.querySelector('h1.heading-title')?.textContent?.trim();
+            doi = document?.querySelector('.doi')?.children[1]?.textContent?.trim();
             try {
-                var authors = Array.from(
-                    document?.querySelectorAll('.authors-list-item')
-                )?.map(item => item?.firstChild?.textContent)?.join(', ');
+                const authors_items = document?.querySelectorAll('.authors-list-item')
+                authors = Array.from(authors_items)?.map(item => item?.firstChild?.textContent)?.join(', ');
             } catch {
-                var authors = undefined;
+                authors = undefined;
             }
             break;
 
         case "JSTOR":
-            if (typeof dataLayer === 'undefined') {
-                return null;
+            if (typeof dataLayer !== 'undefined') {
+                title = dataLayer[0]?.content?.chapterTitle;
+                if (!title) {
+                    title = dataLayer[0]?.content?.itemTitle;
+                }
+                doi = dataLayer[0]?.content?.objectDOI;
             }
-            var title = dataLayer[0]?.content?.chapterTitle;
-            if (!title) {
-                title = dataLayer[0]?.content?.itemTitle;
-            }
-            var doi = dataLayer[0]?.content?.objectDOI;
             try {
-                var authors = Array.from(
-                    document?.querySelectorAll("mfe-content-details-pharos-link[data-qa='item-authors']")
-                )?.map(item => item?.textContent)?.join(', ');
+                const authors_items = document?.querySelectorAll("mfe-content-details-pharos-link[data-qa='item-authors']");
+                authors = Array.from(authors_items)?.map(item => item?.textContent)?.join(', ');
             } catch {
-                var authors = undefined;
+                authors = undefined;
             }
             if (!authors) {
                 authors = document?.querySelector('p.content-meta-data__authors')?.textContent;
             }
             break;
+    }
 
-        default:
-            return null;
+    // last fallback: regex for DOI
+    if (!title && !doi && !authors && typeof document !== 'undefined') {
+        console.log('[BACKGROUND] Attempting to extract DOI via regex');
+        const htmlSource = document?.documentElement?.innerHTML;
+        if (htmlSource) {
+            const doiRegex = new RegExp(
+                /\b(10[.][0-9]{4,}(?:[.][0-9]+)*\/(?:(?!["&\'<>])\S)+)\b/
+            );
+            const doiMatch = htmlSource.match(doiRegex);
+            if (doiMatch) {
+                doi = doiMatch[0].split(";")[0];
+            }
+        }
     }
 
     // if both title and doi are null, we return null
