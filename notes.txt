@@ -1,29 +1,34 @@
 IEEE) https://ieeexplore.ieee.org/
 xplGlobal.document.metadata["title"]
-xplGlobal.document.metadata["authors"].map(author => author.name).join(', ')
 xplGlobal.document.metadata["doi"]
+xplGlobal.document.metadata["authors"].map(author => author.name).join(', ')
 
 Oxford) https://academic.oup.com/
 dataLayer[0].full_title
-dataLayer[0].authors
 dataLayer[0].doi
+dataLayer[0].authors
 
 Springer) https://link.springer.com/
 document.querySelector('h1.c-article-title').textContent
-Array.from(document.querySelectorAll("a[data-test='author-name']")).map(item => item.textContent).join(', ')
 dataLayer[0]['DOI']
+Array.from(document.querySelectorAll("a[data-test='author-name']")).map(item => item.textContent).join(', ')
 
 ScienceDirect) https://www.sciencedirect.com/
 document.querySelector('span.title-text').textContent
-Array.from(document.getElementsByClassName('text surname')).map(item => item.textContent).join(', ')
 document.querySelector('a.anchor.doi.anchor-primary').querySelector('span.anchor-text').textContent.slice(16)
+Array.from(document.getElementsByClassName('text surname')).map(item => item.textContent).join(', ')
 
 PubMed) https://pubmed
 document.querySelector('h1.heading-title').textContent.trim()
-Array.from(document.querySelectorAll('.authors-list-item')).map(item => item.firstChild.textContent).join(', ')
 document.querySelector('.doi').children[1].textContent.trim()
+Array.from(document.querySelectorAll('.authors-list-item')).map(item => item.firstChild.textContent).join(', ')
 
 JSTOR) https://www.jstor.org/
 dataLayer[0].content.chapterTitle
-Array.from(document.querySelectorAll("mfe-content-details-pharos-link[data-qa='item-authors']")).map(item => item.textContent).join(', ')    OR    document.querySelector('p.content-meta-data__authors').textContent
 dataLayer[0].content.objectDOI
+Array.from(document.querySelectorAll("mfe-content-details-pharos-link[data-qa='item-authors']")).map(item => item.textContent).join(', ')    OR    document.querySelector('p.content-meta-data__authors').textContent
+
+
+
+SCIDB URL SEARCH
+https://kmr.annas-archive.org/scidb/10.1109/tac.2019.2913768/  (DOI to lower)
