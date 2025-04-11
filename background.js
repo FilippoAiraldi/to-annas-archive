@@ -92,33 +92,27 @@ function extractDoi(websiteMatch) {
 
 function refineDoi(doi) {
     doi = doi.toLowerCase().trim();
-    console.log("1", doi)
     // quotes
     const quotes = ['"', "'", "‘", "’", "“", "”"];
     for (const quote of quotes) {
-        console.log("checking", quote)
         if (doi.startsWith(quote)) {
-            console.log("removing quote", quote)
             doi = doi.substring(1);
         } else if (doi.endsWith(quote)) {
             doi = doi.substring(0, doi.length - 1);
         }
     }
-    console.log("2", doi)
     // prefixes
     if (doi.startsWith('doi:')) {
         doi = doi.substring(4);
     } else if (doi.startsWith('doi')) {
         doi = doi.substring(3);
     }
-    console.log("3", doi)
     // suffixes
     if (doi.endsWith('.pdf')) {
         doi = doi.substring(0, doi.length - 4);
     } else if (doi.endsWith('pdf')) {
         doi = doi.substring(0, doi.length - 3);
     }
-    console.log("4", doi)
     return doi;
 }
 
