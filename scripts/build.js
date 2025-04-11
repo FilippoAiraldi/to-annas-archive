@@ -27,7 +27,7 @@ function copyRecursive(src, dest) {
 function createBrowserBuild(browser) {
     console.log(`Building for ${browser}...`);
 
-    const outputDir = path.join(distDir, browser);
+    const outputDir = path.join(distDir, "to-annas-archive-" + browser);
     if (!fs.existsSync(outputDir)) {
         fs.mkdirSync(outputDir, { recursive: true });
     }
@@ -39,7 +39,7 @@ function createBrowserBuild(browser) {
         if (entry.startsWith('manifest.') || entry === 'dist' || entry === 'scripts' || entry === '.git' || entry === 'resources' || entry === 'notes.txt') {
             continue;
         }
-        if (browser === 'firefox' && entry === 'background-wrapper.js' || entry === 'browser-polyfill.js') {
+        if (browser === 'firefox' && (entry === 'background-wrapper.js' || entry === 'browser-polyfill.js')) {
             continue;
         }
 
