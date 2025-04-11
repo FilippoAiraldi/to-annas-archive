@@ -14,19 +14,11 @@
         "96": "icons/96x96.png",
         "128": "icons/128x128.png"
     },
-    "browser_specific_settings": {
-        "gecko": {
-            "id": "gsfcvdt04@mozmail.com"
-        }
-    },
     "action": {
         "default_title": "To Anna's!"
     },
     "background": {
-        "service_worker": "background-wrapper.js",
-        "scripts": [
-            "background.js"
-        ]
+        "service_worker": "background-wrapper.js"
     },
     "permissions": [
         "storage",
