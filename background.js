@@ -78,18 +78,23 @@ function extractDoi(websiteMatch) {
             break;
     }
 
-    // last fallback: regex for DOI
+    // if doi is not found, assign to it the whole document html, which is later
+    // run through a regex match to find a DOI
     if (!doi && typeof document !== 'undefined') {
         console.log('[BACKGROUND] Attempting to extract DOI via regex');
-        const htmlSource = document?.documentElement?.innerHTML;
-        if (htmlSource) {
-            const doiRegex = new RegExp(
-                /\b(10[.][0-9]{4,}(?:[.][0-9]+)*\/(?:(?!["&\'<>])\S)+)\b/
-            );
-            const doiMatch = htmlSource.match(doiRegex);
-            if (doiMatch) {
-                doi = doiMatch[0].split(";")[0];
-            }
+        doi = document?.documentElement?.innerHTML;
+    }
+
+    // even if the extraction from a known source worked, we still run it through a
+    // regex match to ensure it is a valid DOI. If the source was not known, the doi is
+    // the whole document html anyway.
+    if (doi) {
+        const doiRegex = new RegExp(
+            /\b(10[.][0-9]{4,}(?:[.][0-9]+)*\/(?:(?!["&\'<>])\S)+)\b/
+        );
+        const doiMatch = doi.match(doiRegex);
+        if (doiMatch) {
+            doi = doiMatch[0].split(";")[0];
         }
     }
     return doi;
