@@ -1,3 +1,7 @@
+TO SEARCH FOR LOCAL VARIABLES
+var mylist = []; for (v in this) mylist.push(v + ''); mylist.sort();
+
+
 IEEE) https://ieeexplore.ieee.org/
 xplGlobal.document.metadata["title"]
 xplGlobal.document.metadata["doi"]
@@ -28,6 +32,8 @@ dataLayer[0].content.chapterTitle
 dataLayer[0].content.objectDOI
 Array.from(document.querySelectorAll("mfe-content-details-pharos-link[data-qa='item-authors']")).map(item => item.textContent).join(', ')    OR    document.querySelector('p.content-meta-data__authors').textContent
 
+MDPI) https://www.mdpi.com/
+document.querySelector('a[href^="https://doi.org/"]').textContent.slice(16)
 
 
 SCIDB URL SEARCH

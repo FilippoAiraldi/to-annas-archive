@@ -10,7 +10,8 @@ const WEBSITES = [
     {name: "Springer Link", urlmatch: "springer"},
     {name: "ScienceDirect", urlmatch: "sciencedirect"},
     {name: "PubMed", urlmatch: "pubmed"},
-    {name: "JSTOR", urlmatch: "jstor"}
+    {name: "JSTOR", urlmatch: "jstor"},
+    {name: "MDPI", urlmatch: "mdpi"}
 ];
 
 
@@ -70,6 +71,10 @@ function extractDoi(websiteMatch) {
             if (typeof dataLayer !== 'undefined') {
                 doi = dataLayer[0]?.content?.objectDOI;
             }
+            break;
+
+        case "MDPI":
+            doi = document?.querySelector('a[href^="https://doi.org/"]')?.textContent?.slice(16);
             break;
     }
 
