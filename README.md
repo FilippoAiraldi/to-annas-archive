@@ -18,15 +18,25 @@ Once its icon is clicked, the extension attempts to automatically extract the DO
 
 ### Firefox
 
-TODO
+The extension is awaiting approval to be distributed by the Mozilla webstore. At the same time, manual installation is available.
 
-### Chrome
+1. Download the [latest release](https://github.com/FilippoAiraldi/to-annas-archive/releases/latest) for Firefox
+1. Unzip the file in the desired folder
+1. In Firefox, type in the search bar _about:debugging_
+1. In the new tab on the left panel, go to _This Firefox_
+1. _Load Temporary Add-on_ -> select the unzipped folder.
 
-TODO
+Similar steps should work also for Firefox forks, e.g., LibreWolf.
 
-### Edge
+### Chrome and Edge
 
-TODO
+The extension is not distributed via the Chrome/Edge webstore, so it must be loaded manually.
+
+1. Download the [latest release](https://github.com/FilippoAiraldi/to-annas-archive/releases/latest) for Chromium
+1. Unzip the file in the desired folder
+1. In Edge, _Extensions_ -> _Manage extensions_
+1. Enable _Developer mode_ (slider on the left panel in Edge, or in the top right corner in Chrome); you should now see the _Load unpacked_ button
+1. _Load unpacked_ -> select the unzipped folder.
 
 ## Options
 
