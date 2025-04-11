@@ -23,6 +23,7 @@
         "default_title": "To Anna's!"
     },
     "background": {
+        "service_worker": "background-wrapper.js",
         "scripts": [
             "background.js"
         ]
@@ -36,6 +37,7 @@
     ],
     "options_page": "options/options.html",
     "options_ui": {
-        "page": "options/options.html"
+        "page": "options/options.html",
+        "open_in_tab": false
     }
 }
