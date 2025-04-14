@@ -18,7 +18,7 @@ Once its icon is clicked, the extension attempts to automatically extract the DO
 
 ### Firefox
 
-The extension is awaiting approval to be distributed by the Mozilla webstore. At the same time, manual installation is available.
+The extension can be installed on the [Mozilla Browser store](https://addons.mozilla.org/en-US/firefox/addon/to-anna-s-archive/). At the same time, manual installation is available.
 
 1. Download the [latest release](https://github.com/FilippoAiraldi/to-annas-archive/releases/latest) for Firefox
 1. Unzip the file in the desired folder
