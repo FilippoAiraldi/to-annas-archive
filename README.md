@@ -6,7 +6,6 @@
 
 [![Supported Browsers](https://img.shields.io/badge/supported%20browsers-firefox%20|%20chrome%20|%20edge-informational?style=for-the-badge)](https://github.com/FilippoAiraldi/to-annas-archive/releases/latest)
 [![Source Code License](https://img.shields.io/badge/license-MIT-blueviolet?style=for-the-badge)](https://github.com/FilippoAiraldi/to-annas-archive/blob/master/LICENSE)
-[![Extension Version](https://img.shields.io/github/manifest-json/manifest_version/FilippoAiraldi/to-annas-archive?filename=manifest.firefox.json&style=for-the-badge&label=manifest%20version)](https://github.com/FilippoAiraldi/to-annas-archive/blob/master/manifest.firefox.json)
 
 Quickly search papers on Anna's Archive 🧬 SciDB!
 
