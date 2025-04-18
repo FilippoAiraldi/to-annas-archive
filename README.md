@@ -43,7 +43,7 @@ The extension is not distributed via the Chrome/Edge webstore, so it must be loa
 
 - **Firefox**: right click on extension's icon -> _Manage Extension_ -> _Options_ tab
 - **Chrome**: vertical dots ⫶ near extension's name -> _Manage extension_ -> scroll down and click _Extension options_
-- **Edge**: horizon dots ••• near extension's name ->  _Extension options_
+- **Edge**: horizontal dots ••• near extension's name ->  _Extension options_
 
 As aforementioned, the options allow to customize the target mirror used to perform the paper search. The options page should look something like this:
 
