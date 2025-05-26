@@ -178,7 +178,10 @@ async function openAnnasArchive(currentTab) {
   }
 }
 
-browser.action.onClicked.addListener(currentTab => {
+browser.runtime.onMessage.addListener(({ currentTab }, _sender, sendResponse) => {
     openAnnasArchive(currentTab)
-        .catch(error => showNotification(error.message));
+        .then(() => sendResponse({}))
+        .catch(error => sendResponse({ errorMessage: error.message }));
+    // return `true` to indicate that we're sending a response.
+    return true;
 });

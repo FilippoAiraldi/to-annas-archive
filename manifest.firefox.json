@@ -20,7 +20,8 @@
         }
     },
     "action": {
-        "default_title": "To Anna's!"
+        "default_title": "To Anna's!",
+        "default_popup": "popup/popup.html"
     },
     "background": {
         "scripts": [
@@ -29,7 +30,6 @@
     },
     "permissions": [
         "storage",
-        "notifications",
         "scripting",
         "activeTab"
     ],

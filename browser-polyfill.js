@@ -44,8 +44,9 @@
         // handle runtime API specially since not all methods need to be promisified
         if (chrome.runtime) {
           browser.runtime = browser.runtime || {};
-          browser.runtime.sendMessage = promisify(browser.runtime, 'sendMessage');
+          browser.runtime.sendMessage = promisify(chrome.runtime, 'sendMessage');
           browser.runtime.getURL = chrome.runtime.getURL;
+          browser.runtime.onMessage = chrome.runtime.onMessage;
         }
 
         // handle the rest of the APIs

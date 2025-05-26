@@ -1,0 +1,31 @@
+<!doctype html>
+<html>
+<head>
+    <style>
+        :root {
+            color-scheme: light dark;
+            background-color: light-dark(#cf1748, #ff7e8e);
+            color: light-dark(#fff, #121218);
+            font-family: system-ui, sans-serif;
+        }
+
+        body {
+            margin: 0;
+        }
+
+        #error-message {
+            padding: 1em;
+            width: max-content; /* needed for proper sizing in chromium */
+            max-width: 20rem;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="error-message" hidden></div>
+</body>
+<script src="../browser-polyfill.js"></script>
+<script type="module" src="./popup.js"></script>
+
+</html>
