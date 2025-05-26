@@ -126,26 +126,19 @@ function refineDoi(doi) {
     return doi;
 }
 
-function openUrl(url, openInNewTab) {
+function openUrl(url, openInNewTab, currentTab) {
     if (openInNewTab) {
         browser.tabs.create({ url: url });
     } else {
-        browser.tabs.query({ active: true, currentWindow: true })
-            .then(tabs => {
-                if (tabs[0]) {
-                    browser.tabs.update(tabs[0].id, { url: url });
-                } else {
-                    showNotification("No active tab found to navigate.");
-                }
-            });
+        browser.tabs.update(currentTab.id, { url: url });
     }
 }
 
-function searchAnnasArchive(articleDoi) {
+function searchAnnasArchive(articleDoi, currentTab) {
     browser.storage.sync.get(DEFAULT_OPTS)
         .then(options => {
             const targetUrl = new URL('scidb/' + articleDoi.toLowerCase(), options.url);
-            openUrl(targetUrl.toString(), options.openInNewTab);
+            openUrl(targetUrl.toString(), options.openInNewTab, currentTab);
         })
         .catch(error => {
             console.error('[BACKGROUND] Error opening URL to Anna\'s Archive:', error);
@@ -153,41 +146,32 @@ function searchAnnasArchive(articleDoi) {
         });
 }
 
-function openAnnasArchive() {
-    browser.tabs.query({ active: true, currentWindow: true })
-        .then(async tabs => {
-            if (!tabs || !tabs[0]) {
-                showNotification("No active tab found.");
-                return;
-            }
+function openAnnasArchive(currentTab) {
+  const currentUrl = currentTab.url;
+  var shortTitle = currentTab.title;
+  if (shortTitle.length > 50) {
+      shortTitle = shortTitle.substring(0, 50) + '...';
+  }
+  const website = identifyWebsite(currentUrl);
 
-            const currentTab = tabs[0];
-            const currentUrl = currentTab.url;
-            var shortTitle = currentTab.title;
-            if (shortTitle.length > 50) {
-                shortTitle = shortTitle.substring(0, 50) + '...';
-            }
-            const website = identifyWebsite(currentUrl);
-
-            browser.scripting.executeScript({
-                target: { tabId: currentTab.id },
-                func: extractDoi,
-                args: [website],
-                world: "MAIN"  // needed to access context of the page
-            }).then(results => {
-                const extractedDoi = results[0].result;
-                if (extractedDoi) {
-                    console.log('[BACKGROUND] Successfully extracted DOI:', extractedDoi);
-                    searchAnnasArchive(refineDoi(extractedDoi));
-                } else {
-                    console.warn('[BACKGROUND] Failed to extract article DOI:', currentUrl);
-                    showNotification(`\"${shortTitle}\": could not extract any article DOI.`);
-                }
-            }).catch(error => {
-                console.error('[BACKGROUND] Error extracting article DOI:', error);
-                showNotification(`\"${shortTitle}\": extraction of article DOI failed: ${error.message}`);
-            });
-        });
+  browser.scripting.executeScript({
+      target: { tabId: currentTab.id },
+      func: extractDoi,
+      args: [website],
+      world: "MAIN"  // needed to access context of the page
+  }).then(results => {
+      const extractedDoi = results[0].result;
+      if (extractedDoi) {
+          console.log('[BACKGROUND] Successfully extracted DOI:', extractedDoi);
+          searchAnnasArchive(refineDoi(extractedDoi), currentTab);
+      } else {
+          console.warn('[BACKGROUND] Failed to extract article DOI:', currentUrl);
+          showNotification(`\"${shortTitle}\": could not extract any article DOI.`);
+      }
+  }).catch(error => {
+      console.error('[BACKGROUND] Error extracting article DOI:', error);
+      showNotification(`\"${shortTitle}\": extraction of article DOI failed: ${error.message}`);
+  });
 }
 
 browser.action.onClicked.addListener(openAnnasArchive);
