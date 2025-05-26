@@ -126,27 +126,27 @@ function refineDoi(doi) {
     return doi;
 }
 
-function openUrl(url, openInNewTab, currentTab) {
+async function openUrl(url, openInNewTab, currentTab) {
     if (openInNewTab) {
-        browser.tabs.create({ url: url });
+        await browser.tabs.create({ url: url });
     } else {
-        browser.tabs.update(currentTab.id, { url: url });
+        await browser.tabs.update(currentTab.id, { url: url });
     }
 }
 
-function searchAnnasArchive(articleDoi, currentTab) {
-    browser.storage.sync.get(DEFAULT_OPTS)
-        .then(options => {
-            const targetUrl = new URL('scidb/' + articleDoi.toLowerCase(), options.url);
-            openUrl(targetUrl.toString(), options.openInNewTab, currentTab);
-        })
-        .catch(error => {
-            console.error('[BACKGROUND] Error opening URL to Anna\'s Archive:', error);
-            showNotification(`Error opening URL to Anna's Archive: ${error.message}`);
-        });
+async function searchAnnasArchive(articleDoi, currentTab) {
+    const options = await browser.storage.sync.get(DEFAULT_OPTS);
+    const targetUrl = new URL('scidb/' + articleDoi.toLowerCase(), options.url);
+    try {
+        await openUrl(targetUrl.toString(), options.openInNewTab, currentTab);
+    }
+    catch (error) {
+        console.error('[BACKGROUND] Error opening URL to Anna\'s Archive:', error);
+        throw new Error(`Error opening URL to Anna's Archive: ${error.message}`);
+    }
 }
 
-function openAnnasArchive(currentTab) {
+async function openAnnasArchive(currentTab) {
   const currentUrl = currentTab.url;
   var shortTitle = currentTab.title;
   if (shortTitle.length > 50) {
@@ -154,24 +154,31 @@ function openAnnasArchive(currentTab) {
   }
   const website = identifyWebsite(currentUrl);
 
-  browser.scripting.executeScript({
-      target: { tabId: currentTab.id },
-      func: extractDoi,
-      args: [website],
-      world: "MAIN"  // needed to access context of the page
-  }).then(results => {
-      const extractedDoi = results[0].result;
-      if (extractedDoi) {
-          console.log('[BACKGROUND] Successfully extracted DOI:', extractedDoi);
-          searchAnnasArchive(refineDoi(extractedDoi), currentTab);
-      } else {
-          console.warn('[BACKGROUND] Failed to extract article DOI:', currentUrl);
-          showNotification(`\"${shortTitle}\": could not extract any article DOI.`);
-      }
-  }).catch(error => {
+  let extractedDoi;
+  try {
+      const results = await browser.scripting.executeScript({
+          target: { tabId: currentTab.id },
+          func: extractDoi,
+          args: [website],
+          world: "MAIN"  // needed to access context of the page
+      });
+      extractedDoi = results[0].result;
+  }
+  catch (error) {
       console.error('[BACKGROUND] Error extracting article DOI:', error);
-      showNotification(`\"${shortTitle}\": extraction of article DOI failed: ${error.message}`);
-  });
+      throw new Error(`\"${shortTitle}\": extraction of article DOI failed: ${error.message}`);
+  }
+
+  if (extractedDoi) {
+      console.log('[BACKGROUND] Successfully extracted DOI:', extractedDoi);
+      await searchAnnasArchive(refineDoi(extractedDoi), currentTab);
+  } else {
+      console.warn('[BACKGROUND] Failed to extract article DOI:', currentUrl);
+      throw new Error(`\"${shortTitle}\": could not extract any article DOI.`);
+  }
 }
 
-browser.action.onClicked.addListener(openAnnasArchive);
+browser.action.onClicked.addListener(currentTab => {
+    openAnnasArchive(currentTab)
+        .catch(error => showNotification(error.message));
+});
