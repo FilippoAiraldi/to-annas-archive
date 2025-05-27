@@ -2,7 +2,7 @@
     "manifest_version": 3,
     "name": "To Anna's Archive",
     "short_name": "to-annas-archive",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "author": "Filippo Airaldi",
     "homepage_url": "https://github.com/FilippoAiraldi/to-annas-archive",
     "description": "Quickly search your article in Anna's Archive",
