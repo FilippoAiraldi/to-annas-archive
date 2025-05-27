@@ -28,7 +28,6 @@
             storage: {
                 sync: ['get', 'set', 'clear']
             },
-            runtime: ['sendMessage', 'getURL'],
             scripting: ['executeScript'],
             notifications: ['create', 'clear']
         };
@@ -40,6 +39,14 @@
             browser.storage.sync.get = promisify(chrome.storage.sync, 'get');
             browser.storage.sync.set = promisify(chrome.storage.sync, 'set');
             browser.storage.sync.clear = promisify(chrome.storage.sync, 'clear');
+        }
+
+        // handle runtime API specially since not all methods need to be promisified
+        if (chrome.runtime) {
+          browser.runtime = browser.runtime || {};
+          browser.runtime.sendMessage = promisify(chrome.runtime, 'sendMessage');
+          browser.runtime.getURL = chrome.runtime.getURL;
+          browser.runtime.onMessage = chrome.runtime.onMessage;
         }
 
         // handle the rest of the APIs
