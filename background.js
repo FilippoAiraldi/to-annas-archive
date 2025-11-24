@@ -128,7 +128,7 @@ function refineDoi(doi) {
 
 async function openUrl(url, openInNewTab, currentTab) {
     if (openInNewTab) {
-        await browser.tabs.create({ url: url });
+        await browser.tabs.create({ openerTabId: currentTab.id, url: url });
     } else {
         await browser.tabs.update(currentTab.id, { url: url });
     }
