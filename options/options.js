@@ -2,8 +2,13 @@
 
 const MIRRORS = [
     "https://annas-archive.org/",
-    "https://annas-archive.se/",
+    "https://annas-archive.gd/",
+    "https://annas-archive.gl/",
     "https://annas-archive.li/",
+    "https://annas-archive.pk/",
+    "https://annas-archive.pm/",
+    "https://annas-archive.in/",
+    "https://annas-archive.se/",
     "https://kmr.annas-archive.org/"
 ];
 const IMG_NAME = "favicon.ico";
